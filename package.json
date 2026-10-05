@@ -1,0 +1,56 @@
+{
+  "name": "@codai/agentcfg-audit",
+  "version": "0.1.0",
+  "description": "Scan and sign agent configuration: AGENTS.md, SKILL.md, hooks, settings and mcp.json.",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "agentcfg-audit": "./dist/cli.mjs"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "audit:self": "node src/cli.ts scan . --fail-on medium"
+  },
+  "keywords": [
+    "agents",
+    "agents-md",
+    "skills",
+    "mcp",
+    "hooks",
+    "security",
+    "prompt-injection",
+    "supply-chain",
+    "signing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dragos-catalin/agentcfg-audit.git"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "prettier": "3.9.9",
+    "tsdown": "0.23.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "vitest": "5.0.3"
+  }
+}
