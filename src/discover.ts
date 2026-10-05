@@ -34,7 +34,7 @@ const toPosix = (p: string): string => p.split(sep).join("/");
  * `~/.claude` directly still recognises `settings.json` as Claude settings.
  */
 export function classify(absPath: string): Kind | null {
-    const p = toPosix(absPath).toLowerCase();
+    const p = absPath.replace(/\\/g, "/").toLowerCase();
     const base = p.slice(p.lastIndexOf("/") + 1);
     if (base === "skill.md") return "skill";
     if (INSTRUCTION_FILES.has(base)) return "instructions";
