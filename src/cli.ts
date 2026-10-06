@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { parseArgs } from "node:util";
 import { discover } from "./discover.ts";
@@ -13,13 +12,13 @@ import {
     generateKeys,
     loadPrivateKey,
     parseManifest,
-    parsePublicKey,
     verifyManifest,
     verifyOk,
 } from "./sign.ts";
+import { trustedKeys } from "./trust.ts";
 import { atLeast, isSeverity } from "./types.ts";
 
-export const VERSION = "0.1.0";
+export const VERSION = "0.2.0";
 
 const HELP = `agentcfg-audit ${VERSION} — scan and sign agent configuration
 
@@ -46,27 +45,6 @@ Options:
               The repository's own manifest never makes its signer trusted.
 
 Exit codes: 0 ok, 1 findings at/above --fail-on or verification failed, 2 usage error.`;
-
-function trustedKeys(cli: string[]): string[] {
-    const raw: string[] = [];
-    for (const t of cli) raw.push(existsSync(t) ? readFileSync(t, "utf8") : t);
-    const env = process.env["AGENTCFG_TRUSTED_KEYS"];
-    if (env) raw.push(...env.split(/[\n,;]/));
-    const file = join(homedir(), ".config", "agentcfg", "trusted_keys");
-    if (existsSync(file)) raw.push(...readFileSync(file, "utf8").split(/\r?\n/));
-    const out: string[] = [];
-    for (const r of raw) {
-        const t = r.replace(/#.*$/, "").trim();
-        if (!t) continue;
-        // A PEM file holds one key over several lines; a list file holds one per line.
-        try {
-            out.push(parsePublicKey(t));
-        } catch {
-            throw new Error(`not an ed25519 public key: ${t.slice(0, 40)}`);
-        }
-    }
-    return out;
-}
 
 async function main(argv: string[]): Promise<number> {
     const { values, positionals } = parseArgs({

@@ -34,6 +34,21 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm run build
+      # Editor gate: build the VS Code extension before anything is uploaded, so a broken
+      # extension stops the release; the .vsix is attached to the GitHub release below.
+      # The Visual Studio Marketplace upload is NOT automated: it needs the owner's `codai`
+      # publisher token, so the owner uploads agentcfg-gate.vsix by hand (vsce with a PAT, or the
+      # Marketplace web UI) after checking the release.
+      - name: Extension version matches the tag
+        run: test "v$(node -p "require('./extension/package.json').version")" = "${GITHUB_REF_NAME}"
+      - name: Build and package the extension
+        working-directory: extension
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm typecheck
+          pnpm test
+          pnpm run build
+          pnpm run package
       - run: npm publish --access public --provenance
       - name: Verify on the registry
         run: |
@@ -46,4 +61,4 @@ jobs:
       - name: GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag
+        run: gh release create "${GITHUB_REF_NAME}" --generate-notes --verify-tag extension/agentcfg-gate.vsix

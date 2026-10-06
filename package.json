@@ -1,6 +1,6 @@
 {
   "name": "@codai/agentcfg-audit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scan and sign agent configuration: AGENTS.md, SKILL.md, hooks, settings and mcp.json.",
   "license": "MIT",
   "type": "module",

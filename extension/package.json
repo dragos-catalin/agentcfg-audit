@@ -1,0 +1,128 @@
+{
+  "name": "agentcfg-gate",
+  "displayName": "agentcfg gate",
+  "description": "Verify a workspace's agent config (AGENTS.md, skills, hooks, MCP) against a signed manifest and lock it out of chat when it does not verify.",
+  "version": "0.2.0",
+  "publisher": "codai",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "main": "./dist/extension.cjs",
+  "engines": {
+    "vscode": "^1.140.0",
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@12.3.4",
+  "categories": [
+    "Other",
+    "AI"
+  ],
+  "keywords": [
+    "agents",
+    "agents-md",
+    "skills",
+    "mcp",
+    "hooks",
+    "security",
+    "signing"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dragos-catalin/agentcfg-audit.git",
+    "directory": "extension"
+  },
+  "activationEvents": [
+    "*"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "In Restricted Mode the gate only shows the verification state; VS Code already ignores the repository's restricted settings, hooks and MCP servers."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "agentcfgGate.verify",
+        "title": "Verify agent config",
+        "category": "agentcfg gate"
+      },
+      {
+        "command": "agentcfgGate.showReport",
+        "title": "Show report",
+        "category": "agentcfg gate"
+      },
+      {
+        "command": "agentcfgGate.unlock",
+        "title": "Unlock agent config",
+        "category": "agentcfg gate"
+      },
+      {
+        "command": "agentcfgGate.lock",
+        "title": "Lock agent config",
+        "category": "agentcfg gate"
+      }
+    ],
+    "configuration": {
+      "title": "agentcfg gate",
+      "properties": {
+        "agentcfgGate.trustedKeys": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "scope": "application",
+          "markdownDescription": "Trusted signer public keys (PEM file path, PEM text or base64 SPKI). Added to `AGENTCFG_TRUSTED_KEYS` and `~/.config/agentcfg/trusted_keys`. Application scope: a repository cannot trust itself."
+        },
+        "agentcfgGate.unsignedPolicy": {
+          "type": "string",
+          "enum": [
+            "scan",
+            "lock",
+            "warn"
+          ],
+          "enumDescriptions": [
+            "Scan the config and lock when a finding is at or above `#agentcfgGate.lockOnSeverity#`.",
+            "Always lock a workspace without agentcfg.lock.json.",
+            "Never lock; show findings only."
+          ],
+          "default": "scan",
+          "scope": "application",
+          "markdownDescription": "What to do with a workspace that has no `agentcfg.lock.json`."
+        },
+        "agentcfgGate.lockOnSeverity": {
+          "type": "string",
+          "enum": [
+            "info",
+            "low",
+            "medium",
+            "high",
+            "critical"
+          ],
+          "default": "high",
+          "scope": "application",
+          "markdownDescription": "Lowest finding severity that locks an unsigned workspace when `#agentcfgGate.unsignedPolicy#` is `scan`."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "prettier --check .",
+    "format": "prettier --write .",
+    "package": "vsce package --no-dependencies --allow-star-activation --out agentcfg-gate.vsix"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "@types/vscode": "1.140.0",
+    "@typescript/native": "npm:typescript@7.0.2",
+    "@vscode/vsce": "4.0.0",
+    "prettier": "3.9.9",
+    "tsdown": "0.23.0",
+    "typescript": "npm:@typescript/typescript6@6.0.2",
+    "vitest": "5.0.3"
+  }
+}
