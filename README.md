@@ -68,6 +68,29 @@ Trusted keys come from `--trust` (PEM file or base64), `AGENTCFG_TRUSTED_KEYS`, 
 
 Run `verify` before opening a cloned repository in an agent, or as the first hook, so unsigned or changed config is caught before anything in it runs.
 
+## Editor gate (VS Code)
+
+`agentcfg gate` is a VS Code extension (in [`extension/`](extension/)) that runs the same `verify` for every workspace folder and, when it fails, turns the repository's agent config off for VS Code's Local agent before you use chat.
+
+```text
+code --install-extension agentcfg-gate.vsix     # from the GitHub release assets
+```
+
+It activates on `*`, the earliest activation event VS Code has, so it decides as soon as the window opens. It re-checks when workspace folders change and when any config file changes (debounced 1 s).
+
+- `agentcfg.lock.json` present: verified against your trusted keys. Pass → `$(shield) agent config verified`. Fail (signature invalid, untrusted signer, changed / added / removed file) → locked.
+- No manifest: `agentcfgGate.unsignedPolicy` decides.
+
+| Setting                       | Scope       | Default | Meaning                                                                                                             |
+| ----------------------------- | ----------- | ------- | ------------------------------------------------------------------------------------------------------------------- |
+| `agentcfgGate.trustedKeys`    | application | `[]`    | Trusted signer keys, added to `AGENTCFG_TRUSTED_KEYS` and `~/.config/agentcfg/trusted_keys`                         |
+| `agentcfgGate.unsignedPolicy` | application | `scan`  | `scan`: lock when a finding is at or above `lockOnSeverity`; `lock`: always lock unsigned; `warn`: never lock, show |
+| `agentcfgGate.lockOnSeverity` | application | `high`  | Lowest severity that locks under `scan`                                                                             |
+
+Locking writes these workspace (or workspace-folder) settings and remembers the previous values, so unlocking restores them exactly: `chat.useAgentsMdFile`, `chat.useNestedAgentsMdFiles`, `chat.useClaudeMdFile`, `github.copilot.chat.codeGeneration.useInstructionFiles`, `chat.includeApplyingInstructions`, `chat.includeReferencedInstructions`, `chat.useAgentSkills`, `chat.useHooks`, `chat.useClaudeHooks` → `false`; `chat.mcp.autostart` → `"never"`; and every location in `chat.instructionsFilesLocations`, `chat.promptFilesLocations`, `chat.agentFilesLocations`, `chat.agentSkillsLocations`, `chat.hookFilesLocations` → `false`.
+
+Commands: **Verify agent config**, **Show report** (reasons and scan findings), **Unlock agent config** (asks first; the same content then stays unlocked until it changes), **Lock agent config**. The gate's own write to `.vscode/settings.json` is recognised by its hash, so locking does not make a signed workspace fail forever; any other edit to that file is reported as a change.
+
 ## Threat model
 
 **Protects against**
@@ -85,12 +108,18 @@ Run `verify` before opening a cloned repository in an agent, or as the first hoo
 - Config outside the scanned paths. Pass `~/.claude`, `~/.copilot` or other user-level directories explicitly.
 - Files larger than 2 MB, which are skipped.
 
+**Editor gate limits**
+
+- It is a race. VS Code's chat loads customizations in the workbench independently of extension activation, so on the very first open the config may be read before the gate has written its settings. Open unknown repositories in Restricted Mode (workspace trust): restricted settings are ignored and hooks and MCP servers do not run there, and the gate shows its verdict before you grant trust.
+- The settings govern only VS Code's Local agent harness. Agent Host harnesses (Copilot CLI and SDK, Claude, Codex) discover customizations themselves; use `agentcfg-audit verify` as their first hook.
+- Trusted keys and policies are application-scope settings, so a repository's `.vscode/settings.json` cannot add a key and trust itself.
+- Unlock is an acknowledgement of one content hash of the config files. Any change locks again.
+
 ## Roadmap
 
-- Editor gate: a VS Code extension that runs `verify` before a workspace's agent config loads.
 - Sigstore keyless signing as an alternative to local keys.
 - Rule packs from a URL, with a pinned hash.
 
 ## Status
 
-0.1: scan, sign and verify work and are tested. Rule ids are stable; severities may move before 1.0. Part of the agent tooling at [dragoscatalin.ro/lab](https://dragoscatalin.ro/lab). MIT licensed.
+0.2: scan, sign and verify work and are tested; the VS Code editor gate ships as a `.vsix` on each GitHub release. Rule ids are stable; severities may move before 1.0. Part of the agent tooling at [dragoscatalin.ro/lab](https://dragoscatalin.ro/lab). MIT licensed.

@@ -22,6 +22,13 @@ jobs:
     with:
       tasks: lint typecheck test build
       extra: node dist/cli.mjs --help && node dist/cli.mjs scan . --fail-on medium && pnpm audit --audit-level high
+  extension:
+    # The reusable workflow checks out the whole repo, so extension/src can import ../../src.
+    uses: dragos-catalin/workflows/.github/workflows/node-ci.yml@v1
+    with:
+      working-directory: extension
+      tasks: lint typecheck test build
+      extra: pnpm run package && pnpm audit --audit-level high
   security:
     uses: dragos-catalin/workflows/.github/workflows/security.yml@v1
     with:

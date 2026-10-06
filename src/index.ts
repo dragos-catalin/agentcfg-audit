@@ -17,4 +17,5 @@ export {
     type VerifyResult,
 } from "./sign.ts";
 export { stripJsonc } from "./structured.ts";
+export { trustedKeys } from "./trust.ts";
 export type { ConfigFile, Finding, Kind, Severity } from "./types.ts";

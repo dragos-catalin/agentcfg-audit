@@ -1,0 +1,5 @@
+minimumReleaseAge: 1440
+allowBuilds:
+  # Marketplace signing is done by the Marketplace; packaging does not need its postinstall.
+  "@vscode/vsce-sign": false
+  esbuild: false
